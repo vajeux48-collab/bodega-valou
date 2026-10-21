@@ -1,0 +1,17 @@
+{
+  "appId": "fr.valou.bodega",
+  "appName": "La Bodega de Valou",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "FirebaseMessaging": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
+  }
+}
