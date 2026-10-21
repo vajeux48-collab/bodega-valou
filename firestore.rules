@@ -12,6 +12,16 @@ service cloud.firestore {
      && request.resource.data.name is string
      && request.resource.data.name.size() <= 24;
    allow update: if organizer() || (
+      signedIn() && request.auth.uid != playerId
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["challenge"])
+      && request.resource.data.challenge is map
+      && request.resource.data.challenge.kind == "normal"
+      && request.resource.data.challenge.senderUid == request.auth.uid
+      && request.resource.data.challenge.nonce is string
+      && request.resource.data.challenge.title is string
+      && request.resource.data.challenge.text is string
+      && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+    ) || (
       signedIn() && request.auth.uid == playerId
       && request.resource.data.diff(resource.data).changedKeys().hasOnly(['name','score','challenge'])
       && request.resource.data.score is number
