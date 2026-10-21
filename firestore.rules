@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
   function signedIn(){return request.auth != null;}
-  function organizer(){return signedIn() && request.auth.uid == "REMPLACER_UID_ORGANISATEUR";}
+  function organizer(){return signedIn() && request.auth.uid == "clRiN0j1GThtUex7zPf48dRwGMo1";}
   match /players/{playerId} {
    allow read: if signedIn();
    allow create: if signedIn() && request.auth.uid == playerId
