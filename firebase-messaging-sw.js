@@ -11,8 +11,8 @@ firebase.initializeApp({
 });
 const messaging=firebase.messaging();
 messaging.onBackgroundMessage(payload=>{
- const title=payload.notification?.title||"🎯 La Bodega de Valou";
- const options={body:payload.notification?.body||"Tu as reçu un nouveau défi !",icon:"./favicon.ico",data:{url:self.registration.scope}};
+ const title=payload.data?.title||payload.notification?.title||"🎯 La Bodega de Valou";
+ const options={body:payload.data?.body||payload.notification?.body||"Tu as reçu un nouveau défi !",icon:"./favicon.ico",data:{url:payload.data?.url||self.registration.scope}};
  self.registration.showNotification(title,options);
 });
 self.addEventListener("notificationclick",event=>{
