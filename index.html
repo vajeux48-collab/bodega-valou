@@ -17,7 +17,7 @@ import {getFirestore,collection,doc,setDoc,getDoc,updateDoc,onSnapshot,runTransa
 // REMPLACER avec la configuration Web de votre nouveau projet Firebase.
 const firebaseConfig={apiKey:"AIzaSyB_I_7wrcRaxdjRQw2YbLPjeJKRMcj2s28",authDomain:"bodega-valou.firebaseapp.com",projectId:"bodega-valou",storageBucket:"bodega-valou.firebasestorage.app",messagingSenderId:"779911533588",appId:"1:779911533588:web:5d79629fdcc3c78cdf0301"};
 const ADMIN_UID="clRiN0j1GThtUex7zPf48dRwGMo1";
-const FCM_VAPID_KEY="REMPLACER_PAR_CLE_VAPID_PUBLIQUE";
+const FCM_VAPID_KEY="BLufkMeEE7CSH1kYMpiH9gVJb07OKZWXBi56AE4Ofy0SMByIj1hmkgACQEGPcW4DysBmz4G0LxFlYVt7_7HrXH0";
 const $=id=>document.getElementById(id),show=(id,on=true)=>$(id).classList.toggle('hidden',!on);
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 let uid=null,profile=null,active=null,players=[],unsub=null,unsubSelf=null,lastNonce=null,admin=false;let initialSelfSnapshot=true,toastTimer=null;
