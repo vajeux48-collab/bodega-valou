@@ -14,7 +14,7 @@ exports.pyramideAction=onCall({region:"europe-west1",maxInstances:10},async req=
  const member=ref.collection("members").doc(uid);
  if(action==="create"){
   const name=String(req.data.name||"").trim().slice(0,22);if(!name)fail("Prénom requis");
-  await db.runTransaction(async t=>{if((await t.get(ref)).exists)fail("Code déjà utilisé");t.create(ref,{host:uid,status:"lobby",step:0,current:null,claim:null,createdAt:Date.now()});t.create(member,{name,score:0,joinedAt:Date.now()})});
+  await db.runTransaction(async t=>{if((await t.get(ref)).exists)fail("Code déjà utilisé");t.create(ref,{host:uid,status:"lobby",step:0,current:null,revealed:[],claim:null,createdAt:Date.now()});t.create(member,{name,score:0,joinedAt:Date.now()})});
   return {ok:true};
  }
  if(action==="join"){
@@ -25,11 +25,11 @@ exports.pyramideAction=onCall({region:"europe-west1",maxInstances:10},async req=
  if(action==="start"){
   const members=await ref.collection("members").get();if(members.size<2||members.size>9)fail("Il faut 2 à 9 joueurs");
   const deck=shuffle(),hands={};for(const m of members.docs)hands[m.id]=deck.splice(0,4);
-  await db.runTransaction(async t=>{const r=await t.get(ref);if(!r.exists||r.data().host!==uid||r.data().status!=="lobby")fail("Action refusée");t.create(privateRef,{deck:deck.slice(0,15),hands});t.update(ref,{status:"playing",step:0,current:null,claim:null});for(const [id,cards] of Object.entries(hands))t.set(ref.collection("hands").doc(id),{cards})});
+  await db.runTransaction(async t=>{const r=await t.get(ref);if(!r.exists||r.data().host!==uid||r.data().status!=="lobby")fail("Action refusée");t.create(privateRef,{deck:deck.slice(0,15),hands});t.update(ref,{status:"playing",step:0,current:null,revealed:[],claim:null});for(const [id,cards] of Object.entries(hands))t.set(ref.collection("hands").doc(id),{cards})});
   return {ok:true};
  }
  if(action==="reveal"||action==="skip"){
-  await db.runTransaction(async t=>{const [r,p]=await Promise.all([t.get(ref),t.get(privateRef)]);if(!r.exists||r.data().host!==uid||r.data().status!=="playing"||r.data().claim)fail("Action refusée");if(action==="skip"&&!r.data().current)fail("Aucune carte à passer");if(action==="reveal"&&r.data().current)fail("Carte en cours");const n=r.data().step;if(n>=15){t.update(ref,{status:"done",current:null});return}let row=1,left=n;while(left>5-row){left-=5-row;row++}const c=p.data().deck[n];t.update(ref,{step:n+1,current:{...c,row,index:n},claim:null})});
+  await db.runTransaction(async t=>{const [r,p]=await Promise.all([t.get(ref),t.get(privateRef)]);if(!r.exists||r.data().host!==uid||r.data().status!=="playing"||r.data().claim)fail("Action refusée");if(action==="skip"&&!r.data().current)fail("Aucune carte à passer");if(action==="reveal"&&r.data().current)fail("Carte en cours");const n=r.data().step;if(n>=15){t.update(ref,{status:"done",current:null});return}let row=1,left=n;while(left>5-row){left-=5-row;row++}const c=p.data().deck[n];t.update(ref,{step:n+1,current:{...c,row,index:n},revealed:[...(r.data().revealed||[]),{...c,row,index:n}],claim:null})});
   return {ok:true};
  }
  if(action==="announce"){
