@@ -2,17 +2,30 @@ rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
   match /pyramideRooms/{roomId} {
-   allow read: if request.auth != null && exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid));
-   allow write: if false;
+   function signed(){return request.auth != null;}
+   function member(){return signed() && exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid));}
+   function host(){return member() && resource.data.host == request.auth.uid;}
+   allow get: if signed();
+   allow list: if false;
+   allow create: if signed() && request.resource.data.host == request.auth.uid && request.resource.data.status == 'lobby' && request.resource.data.step == 0;
+   allow update: if member() && (
+     (host() && request.resource.data.host == resource.data.host && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','step','current','claim','revealed','deck','lastResult']))
+     || (resource.data.status == 'playing' && request.resource.data.host == resource.data.host && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claim']) && request.resource.data.claim.from == request.auth.uid)
+     || (resource.data.claim != null && resource.data.claim.to == request.auth.uid && request.resource.data.host == resource.data.host && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claim','current','status','lastResult']))
+   );
+   allow delete: if false;
    match /members/{uid} {
-    allow read: if request.auth != null && exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid));
-    allow write: if false;
+    allow read: if member();
+    allow create: if signed() && request.auth.uid == uid && get(/databases/$(database)/documents/pyramideRooms/$(roomId)).data.status == 'lobby';
+    allow update: if member() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score']) && request.resource.data.score is int && request.resource.data.score >= resource.data.score;
+    allow delete: if false;
    }
    match /hands/{uid} {
-    allow read: if request.auth != null && request.auth.uid == uid;
-    allow write: if false;
+    // Mode gratuit: les cartes sont masquées dans l'interface, mais les membres peuvent les lire pour vérifier un bluff.
+    allow read: if member();
+    allow create: if member() && get(/databases/$(database)/documents/pyramideRooms/$(roomId)).data.host == request.auth.uid && !exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/hands/$(uid));
+    allow update, delete: if false;
    }
   }
-  match /pyramidePrivate/{roomId} { allow read, write: if false; }
  }
 }
