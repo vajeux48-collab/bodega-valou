@@ -31,13 +31,16 @@ jobs:
         run: npm ci --prefix pyramide/functions || npm install --prefix pyramide/functions
       - name: Installer Firebase CLI
         run: npm install -g firebase-tools
-      - name: Vérifier les identifiants Google Cloud
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Vérifier l'accès Google Cloud
         run: |
           test -n "$GOOGLE_APPLICATION_CREDENTIALS"
           test -f "$GOOGLE_APPLICATION_CREDENTIALS"
-          gcloud auth list
+          gcloud auth print-access-token > /dev/null
       - name: Déployer les règles et fonctions
         working-directory: pyramide
         env:
           GOOGLE_CLOUD_PROJECT: pyramide-valou
-        run: firebase deploy --project pyramide-valou --only firestore:rules,functions --non-interactive
+        run: |
+          export FIREBASE_TOKEN="$(gcloud auth print-access-token)"
+          firebase deploy --project pyramide-valou --only firestore:rules,functions --non-interactive
