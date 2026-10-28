@@ -1,0 +1,30 @@
+// À fusionner avec les règles Firestore existantes du projet bodega-valou.
+// Ne pas remplacer les règles existantes : les autres jeux utilisent ce même projet.
+// Cette version conviviale permet aux membres du salon de consulter les mains via Firestore
+// pour vérifier les bluffs : elles ne sont donc PAS secrètes face à un utilisateur technique.
+// Pour une confidentialité forte, utiliser une fonction Cloud côté serveur.
+match /pyramideRooms/{roomId} {
+  allow create: if request.auth != null
+    && request.resource.data.host == request.auth.uid
+    && request.resource.data.status == "lobby";
+  allow read: if request.auth != null;
+  allow update: if request.auth != null
+    && exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid));
+  allow delete: if false;
+  match /members/{memberId} {
+    allow read: if request.auth != null;
+    allow create: if request.auth != null && request.auth.uid == memberId
+      && get(/databases/$(database)/documents/pyramideRooms/$(roomId)).data.status == "lobby";
+    allow update: if request.auth != null
+      && (request.auth.uid == memberId
+          || exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid)));
+    allow delete: if false;
+  }
+  match /hands/{memberId} {
+    allow read: if request.auth != null
+      && exists(/databases/$(database)/documents/pyramideRooms/$(roomId)/members/$(request.auth.uid));
+    allow create, update: if request.auth != null
+      && get(/databases/$(database)/documents/pyramideRooms/$(roomId)).data.host == request.auth.uid;
+    allow delete: if false;
+  }
+}
